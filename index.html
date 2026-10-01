@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Genius Tools</title>
+<style>
+:root{--bg:#0d0d0d;--nav:#111214;--panel:#161719;--ink:#ececec;--muted:#8b8f98;--line:#26282c;--accent:#2f9e7a;--accent-ink:#fff;color-scheme:dark;box-sizing:border-box}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f5f6f8;--nav:#fff;--panel:#eef0f4;--ink:#1a1d24;--muted:#667085;--line:#dcdfe6;--accent:#0f7a5c;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0d0d0d;--nav:#111214;--panel:#161719;--ink:#ececec;--muted:#8b8f98;--line:#26282c;--accent:#2f9e7a;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f5f6f8;--nav:#fff;--panel:#eef0f4;--ink:#1a1d24;--muted:#667085;--line:#dcdfe6;--accent:#0f7a5c;color-scheme:light}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.app{height:100%;display:flex;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.side{width:224px;flex:none;display:flex;flex-direction:column;gap:6px;background:var(--nav);border-right:1px solid var(--line);padding:14px 12px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 6px 16px}
+.logo{height:34px;width:34px;border-radius:8px;object-fit:contain;flex:none}
+.bname{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
+.menu{display:flex;flex-direction:column;gap:4px;flex:1}
+.menu button,.theme{font:inherit;color:var(--muted);background:transparent;border:1px solid transparent;border-radius:8px;padding:9px 12px;text-align:left;cursor:pointer}
+.menu button:hover,.theme:hover{color:var(--ink);background:var(--panel)}
+.menu button[aria-selected="true"]{color:var(--ink);background:var(--panel);border-color:var(--line);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.theme{border-color:var(--line);text-align:center}
+.stage{flex:1;min-width:0;position:relative}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:var(--bg)}
+.stage iframe[hidden]{display:none}
+@media (max-width:720px){
+  .app{flex-direction:column}
+  .side{width:auto;flex-direction:row;align-items:center;border-right:0;border-bottom:1px solid var(--line);padding:8px 10px;overflow-x:auto}
+  .brand{padding:0 6px 0 0}.bname{display:none}
+  .menu{flex-direction:row;flex:1}.menu button{white-space:nowrap}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <!-- LOGO: replace the src below with your Genius logo. Use a relative path (e.g. genius-logo.png sitting next to this file) when hosted on GitHub Pages / an intranet,
+           or a data: URI (data:image/png;base64,...) if you want everything in this one file. Delete the <span> next to it if your logo already includes the name. -->
+      <img class="logo" id="logo" alt="Genius" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='rgb(47,158,122)'/><text x='16' y='22' font-size='18' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='white'>G</text></svg>">
+      <span class="bname">Genius</span>
+    </div>
+    <nav class="menu" role="tablist" aria-label="Tools">
+      <button type="button" role="tab" id="tab-log" data-tool="log" aria-selected="true">Log Analyser</button>
+      <button type="button" role="tab" id="tab-json" data-tool="json" aria-selected="false">JSON Validator</button>
+    </nav>
+    <button type="button" class="theme" id="theme" aria-label="Toggle light or dark theme">Theme</button>
+  </aside>
+  <main class="stage">
+    <iframe id="f-log" title="Log Analyser" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+    <iframe id="f-json" title="JSON Validator" allow="clipboard-read; clipboard-write" hidden></iframe>
+  </main>
+</div>
+
+<!-- Original tool sources are embedded below as plain text and loaded into the frames on demand.
+     Only "<script", "</script" and "<!--" are escaped with a backslash so the page can hold them. -->
+<script type="text/plain" id="src-log">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MES Log Analyser</title>
+<\script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --bg2: #141720;
+    --bg3: #1c2030;
+    --border: #2a2f45;
+    --accent: #4f8ef7;
+    --accent2: #38d9a9;
+    --accent3: #f7934f;
+    --danger: #f75f5f;
+    --text: #e2e6f0;
+    --text2: #8892a4;
+    --text3: #4a5268;
+    --success: #38d9a9;
+    --warning: #f7c34f;
+    --radius: 8px;
+  }
+
+
+  /* ── Light theme ── */
+  [data-theme="light"] {
+    --bg: #f4f5f7;
+    --bg2: #ffffff;
+    --bg3: #eef0f4;
+    --border: #dde1ea;
+    --accent: #2563eb;
+    --accent2: #0d9e72;
+    --accent3: #d97706;
+    --danger: #dc2626;
+    --text: #111827;
+    --text2: #4b5563;
+    --text3: #9ca3af;
+    --success: #0d9e72;
+    --warning: #d97706;
+  }
+  [data-theme="light"] header { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  [data-theme="light"] .kpi,
+  [data-theme="light"] .chart-card,
+  [data-theme="light"] .table-card,
+  [data-theme="light"] #detail-panel { box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  [data-theme="light"] select,
+  [data-theme="light"] input[type="text"] { background: #fff; color: #111827; }
+  [data-theme="light"] select option { background: #fff; color: #111827; }
+  [data-theme="light"] .badge-ok  { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+  [data-theme="light"] .badge-err { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+  [data-theme="light"] .badge-warn{ background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+  [data-theme="light"] .drop-box  { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  [data-theme="light"] tbody tr:hover { background: #f0f2f6; }
+  [data-theme="light"] tbody tr.selected { background: #dbeafe; }
+  [data-theme="light"] .detail-header { background: #eef0f4; }
+  [data-theme="light"] pre { background: #eef0f4 !important; }
+
+  /* ── Kiosk mode ── */
+  body.kiosk header { display: none !important; }
+  body.kiosk #upload-zone { min-height: 100vh; }
+  body.kiosk #dashboard { padding-top: 20px; }
+
+  /* ── Hide logo ── */
+  body.hide-logo .logo,
+  body.hide-logo .sep { display: none; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--text2); font-weight: 400; }
+  header .sep { width: 1px; height: 20px; background: var(--border); }
+  #file-status { font-size: 12px; color: var(--text2); font-family: 'IBM Plex Mono', monospace; }
+  #file-status.loaded { color: var(--accent2); }
+
+  /* ── Upload zone ── */
+  #upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 61px);
+    padding: 40px;
+  }
+  .drop-box {
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    padding: 64px 80px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    max-width: 560px;
+    width: 100%;
+    background: var(--bg2);
+  }
+  .drop-box:hover, .drop-box.drag-over {
+    border-color: var(--accent);
+    background: #1a2035;
+  }
+  .drop-icon {
+    font-size: 40px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+  .drop-box h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .drop-box p {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+  #file-input { display: none; }
+
+  /* ── Dashboard ── */
+  #dashboard { display: none; padding: 28px 32px; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .top-bar h1 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .top-bar h1 span { color: var(--text); }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  select, input[type="text"] {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  select:focus, input[type="text"]:focus { border-color: var(--accent); }
+  select option { background: var(--bg2); }
+
+  /* ── KPI row ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi.kpi-blue::before { background: var(--accent); }
+  .kpi.kpi-green::before { background: var(--accent2); }
+  .kpi.kpi-orange::before { background: var(--accent3); }
+  .kpi.kpi-red::before { background: var(--danger); }
+  .kpi label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .kpi .value {
+    font-size: 28px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1;
+  }
+  .kpi.kpi-blue .value { color: var(--accent); }
+  .kpi.kpi-green .value { color: var(--accent2); }
+  .kpi.kpi-orange .value { color: var(--accent3); }
+  .kpi.kpi-red .value { color: var(--danger); }
+  .kpi .sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── Charts grid ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .chart-card h3 {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* ── Table ── */
+  .table-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-header h3 {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .table-wrap { overflow-x: auto; max-height: 400px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--bg3);
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'IBM Plex Mono', monospace;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--bg3); }
+  tbody tr.selected { background: #1a2540; border-color: var(--accent); }
+  tbody td {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    white-space: nowrap;
+    color: var(--text2);
+  }
+  tbody td.pid { color: var(--accent); font-weight: 500; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .badge-ok { background: #0d2e22; color: var(--accent2); border: 1px solid #1a4d3a; }
+  .badge-err { background: #2e0d0d; color: var(--danger); border: 1px solid #4d1a1a; }
+  .badge-warn { background: #2e1f0d; color: var(--warning); border: 1px solid #4d3a1a; }
+
+  /* ── Detail panel ── */
+  #detail-panel {
+    display: none;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .detail-header h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .detail-header h3 span { color: var(--accent); }
+  .detail-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-tab {
+    padding: 10px 20px;
+    font-size: 12px;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+  }
+  .detail-tab:hover { color: var(--text); }
+  .detail-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .detail-content { padding: 16px 20px; }
+  .log-lines { max-height: 300px; overflow-y: auto; }
+  .log-line {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text2);
+    padding: 3px 0;
+    border-bottom: 1px solid #1c2030;
+    line-height: 1.5;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  .log-line .ts { color: var(--text3); }
+  .log-line .level-info { color: var(--accent); }
+  .log-line .level-debug { color: var(--text3); }
+  .log-line .level-warn { color: var(--warning); }
+  .log-line .level-error { color: var(--danger); }
+  .log-line .highlight { color: var(--accent2); font-weight: 500; }
+
+  /* ── Duration bar chart ── */
+  .api-bars { display: flex; flex-direction: column; gap: 8px; }
+  .api-bar-row { display: flex; align-items: center; gap: 10px; }
+  .api-bar-label {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text2);
+    width: 220px;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .api-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .api-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .api-bar-val {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text3);
+    width: 52px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text3);
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── Progress ── */
+  #parse-progress {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  .progress-bar {
+    width: 300px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 16px auto 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: prog 1.5s ease-in-out infinite;
+  }
+  @keyframes prog {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  @media (max-width: 900px) {
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    #dashboard { padding: 16px; }
+  }
+</style>
+<style>/* injected by shell */header .logo,header .sep{display:none}</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MES <span>/</span> Log Analyser</div>
+  <div class="sep"></div>
+  <div id="file-status">no file loaded</div>
+  <div style="flex:1"></div>
+</header>
+
+<\!-- Upload -->
+<div id="upload-zone">
+  <div class="drop-box" id="drop-box">
+    <div class="drop-icon">📄</div>
+    <h2>Drop your log file here</h2>
+    <p>Supports <strong>IMSAPIService</strong> log files.<br>Select multiple files to merge them into one analysis.<br>Parsed entirely in your browser — nothing is uploaded anywhere.</p>
+    <button class="btn" onclick="const fi=document.getElementById('file-input');fi.value='';fi.click()">Choose file</button>
+    <input type="file" id="file-input" accept=".log,.txt" multiple onchange="handleFiles(this.files)">
+  </div>
+  <div id="parse-progress">
+    <div>Parsing log file…</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+</div>
+
+<\!-- Dashboard -->
+<div id="dashboard">
+  <div class="top-bar">
+    <h1>Analysis — <span id="dash-filename">file.log</span></h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-ghost" onclick="resetApp()" id="reset-btn" style="display:none;font-size:11px;padding:6px 14px">↩ Load another file</button>
+    </div>
+    <div class="filters">
+      <select id="filter-station" onchange="applyFilters()">
+        <option value="">All stations</option>
+      </select>
+      <select id="filter-method" onchange="applyFilters()">
+        <option value="">All methods</option>
+      </select>
+      <select id="filter-rv" onchange="applyFilters()">
+        <option value="">All return values</option>
+      </select>
+    </div>
+  </div>
+
+  <\!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi kpi-blue">
+      <label>Total CF calls</label>
+      <div class="value" id="kpi-total">—</div>
+      <div class="sub" id="kpi-timespan">—</div>
+    </div>
+    <div class="kpi kpi-green">
+      <label>Success rate</label>
+      <div class="value" id="kpi-success">—</div>
+      <div class="sub" id="kpi-ok-count">—</div>
+    </div>
+    <div class="kpi kpi-orange">
+      <label>Avg cycle time</label>
+      <div class="value" id="kpi-avgdur">—</div>
+      <div class="sub" id="kpi-maxdur">—</div>
+    </div>
+    <div class="kpi kpi-red">
+      <label>Failure count</label>
+      <div class="value" id="kpi-fail">—</div>
+      <div class="sub" id="kpi-fail-sub">—</div>
+    </div>
+  </div>
+
+  <\!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Return values</h3>
+      <div class="chart-wrap"><canvas id="chart-rv"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Top 10 method names</h3>
+      <div class="chart-wrap"><canvas id="chart-methods"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Calls over time</h3>
+      <div class="chart-wrap"><canvas id="chart-timeline"></canvas></div>
+    </div>
+  </div>
+
+  <\!-- CF Table -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>CF Executions — <span id="table-count" style="color:var(--text2)">0</span> entries</h3>
+      <input type="text" id="search-box" placeholder="Search PID, method, station…" oninput="renderTable()" style="width:260px">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>PID</th>
+            <th style="cursor:pointer;user-select:none" onclick="toggleSort('timestamp')" id="th-timestamp">Timestamp <span id="sort-icon">↑</span></th>
+            <th>Method</th>
+            <th>Station</th>
+            <th>Serial</th>
+            <th>Duration</th>
+            <th>Return value</th>
+          </tr>
+        </thead>
+        <tbody id="cf-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <\!-- Detail panel -->
+  <div id="detail-panel">
+    <div class="detail-header">
+      <h3>CF <span id="detail-pid">—</span> detail</h3>
+      <button class="btn btn-ghost" onclick="closeDetail()" style="font-size:11px;padding:5px 12px">✕ close</button>
+    </div>
+    <div class="detail-tabs">
+      <div class="detail-tab active" onclick="switchTab('inargs')">InArgs</div>
+      <div class="detail-tab" onclick="switchTab('outargs')">OutArgs</div>
+      <div class="detail-tab" onclick="switchTab('queries')">SQL Queries</div>
+      <div class="detail-tab" onclick="switchTab('apicalls')">API Durations</div>
+      <div class="detail-tab" onclick="switchTab('raw')">Raw logs</div>
+    </div>
+    <div class="detail-content" id="detail-content"></div>
+  </div>
+</div>
+
+<\script>
+// ── State ──────────────────────────────────────────────────────────
+let allCFs = [];
+let filteredCFs = [];
+let charts = {};
+let currentTab = 'inargs';
+let selectedPid = null;
+let sortCol = 'timestamp';
+let sortDir = 'asc';
+
+// ── Drag & drop ────────────────────────────────────────────────────
+const dropBox = document.getElementById('drop-box');
+dropBox.addEventListener('dragover', e => { e.preventDefault(); dropBox.classList.add('drag-over'); });
+dropBox.addEventListener('dragleave', () => dropBox.classList.remove('drag-over'));
+dropBox.addEventListener('drop', e => {
+  e.preventDefault();
+  dropBox.classList.remove('drag-over');
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+
+// ── File handling ──────────────────────────────────────────────────
+function handleFiles(files) {
+  if (!files || !files.length) return;
+  const fileList = Array.from(files);
+
+  // Reset state
+  allCFs = []; filteredCFs = []; selectedPid = null;
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('detail-panel').style.display = 'none';
+  document.getElementById('filter-station').innerHTML = '<option value="">All stations</option>';
+  document.getElementById('filter-method').innerHTML  = '<option value="">All methods</option>';
+  document.getElementById('filter-rv').innerHTML      = '<option value="">All return values</option>';
+  document.getElementById('search-box').value = '';
+  document.getElementById('cf-tbody').innerHTML = '';
+
+  ['chart-rv','chart-methods','chart-timeline'].forEach(id => {
+    const el = document.getElementById(id);
+    const canvas = document.createElement('canvas');
+    canvas.id = id;
+    el.parentNode.replaceChild(canvas, el);
+  });
+
+  dropBox.style.display = 'none';
+  document.getElementById('parse-progress').style.display = 'block';
+  document.getElementById('file-status').textContent = fileList.length > 1 ? fileList.length + ' files' : fileList[0].name;
+  document.getElementById('file-status').classList.add('loaded');
+  document.getElementById('dash-filename').textContent = fileList.length > 1 ? fileList.length + ' files merged' : fileList[0].name;
+  document.getElementById('reset-btn').style.display = '';
+
+  let pending = fileList.length;
+  let merged = [];
+
+  fileList.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      setTimeout(() => {
+        try {
+          const parsed = parseLog(e.target.result);
+          merged = merged.concat(parsed);
+        } catch(err) {
+          console.error('Parse error for', file.name, err);
+        }
+        pending--;
+        if (pending === 0) {
+          allCFs = merged.sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+          if (allCFs.length === 0) {
+            alert('No customFunction calls found in selected files.');
+            resetApp();
+            return;
+          }
+          buildDashboard();
+        }
+      }, 50);
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+function handleFile(file) {
+  if (file) handleFiles([file]);
+}
+
+// ── Parser ─────────────────────────────────────────────────────────
+function parseLog(text) {
+  const lines = text.split(/\r?\n/);
+  const cfMap = {};
+
+  // Regexps
+  const reEntry    = /\[(\d{2}\.\d{2}\.\s*\d{2}:\d{2}:\d{2},\d{3})\]\[(?:INFO|DEBUG|WARN)\]\[(?:[^\]]*\.)?customFunction:(\d+)(?::[^\]]+)?\]\[IMSAPIService\]\s*>Entry method IMSApiServiceBean\.customFunction/;
+  const reExit     = /\[(\d{2}\.\d{2}\.\s*\d{2}:\d{2}:\d{2},\d{3})\].*\[(?:[^\]]*\.)?customFunction:(\d+)(?::([^\]]+))?\]\[IMSAPIService\].*>customFunction(?:\s+\(Host:[^)]+\))?\s+returned in (\d+)ms.*with (-?\d+)</;
+  const reMethod   = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>\[methodName \(String\)\]:\s*([^\s<]+)</;
+  const reInArgs   = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>\[inArgs \(String\[\]\)\]:\s*(\[.*\])</;
+  const reStationJ = /"stationNumber"\s*:\s*"([^"]+)"/;
+  const reSerialJ  = /"serialNumber"\s*:\s*"([^"]+)"/;
+  const reStation2 = /(?:[^.\]]*\.)?customFunction:\d+:([^\]\s:]+)/;
+  const reApiCall   = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>\s*([A-Za-z][A-Za-z0-9_]+)\s+\(Station:[^)]+\)\s+returned in (\d+)ms with (-?\d+)</;
+  const reApiEntry  = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>Entry method IMSApiServiceBean\.([A-Za-z][A-Za-z0-9_]+)\s*</;
+  const reApiRet    = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>Ret:\s*\[Result_([A-Za-z][A-Za-z0-9_]+)\]:\s*(.+)/;
+  const reSql         = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*(?:getResultList|getSingleResult)\((~[^)]+)\)\s*SQL-String\s*=\s*(.+)/;
+  const reSqlDuration = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*(?:getResultList|getSingleResult)\((~[^)]+)\)\s*finished in (\d+)ms(?:.*?(\d+) row)?/;
+  const reSqlPaging    = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>PagingDataSourceQuery\.(?:getResultList|getSingleResult)\(\)\s*SQL-String\s*=\s*(.+)/;
+  const reSqlPagingDur = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>PagingDataSourceQuery\.(?:getResultList|getSingleResult)\(\)\s*finished in (\d+)ms.*?(\d+) row/;
+  const reSqlUnc      = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*> START \w+ SID:\d+, ID:\[(\d+)\] (.+?) \([^)]*\) </;
+  const reSqlUncDur   = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*> END \w+ SID:\d+, ID:\[(\d+)\] \([^)]*\) (\d+) rows finished in (\d+)ms/;
+  const reOutArgs  = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>Ret:\s*\[Result_customFunction\].*outArgs\s*=\s*\(String\[\]\):\s*(\[.+\])/;
+  const reMethodResponse = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>methodReponseContent \(String\):\s*(\{.*\})/;
+
+  for (const line of lines) {
+    // Entry
+    let m = line.match(reEntry);
+    if (m) {
+      const pid = m[2];
+      cfMap[pid] = {
+        pid, timestamp: m[1], method: '', station: '', serial: '',
+        duration: null, returnValue: null, lines: [],
+        inArgs: '', outArgs: '', sqlQueries: [], apiCalls: [], _apiStack: []
+      };
+      cfMap[pid].lines.push(line);
+      // Try to get station from thread name
+      const s2 = line.match(reStation2);
+      if (s2) cfMap[pid].station = s2[1];
+      continue;
+    }
+
+    // Find PID from line
+    const pidMatch = line.match(/\[(?:[^\]]*\.)?customFunction:(\d+)/);
+    if (!pidMatch) continue;
+    const pid = pidMatch[1];
+    if (!cfMap[pid]) continue;
+    cfMap[pid].lines.push(line);
+
+    // Exit
+    m = line.match(reExit);
+    if (m && m[2] === pid) {
+      cfMap[pid].duration = parseInt(m[4]);
+      cfMap[pid].returnValue = parseInt(m[5]);
+      if (m[3]) cfMap[pid].station = m[3];
+      continue;
+    }
+
+    // Method name
+    m = line.match(reMethod);
+    if (m && m[1] === pid && !cfMap[pid].method) {
+      cfMap[pid].method = m[2];
+      continue;
+    }
+
+    // InArgs
+    m = line.match(reInArgs);
+    if (m && m[1] === pid) {
+      cfMap[pid].inArgs = m[2];
+      const sj = m[2].match(reStationJ);
+      if (sj && !cfMap[pid].station) cfMap[pid].station = sj[1];
+      const ser = m[2].match(reSerialJ);
+      if (ser) cfMap[pid].serial = ser[1];
+      // Fallback: try unit, serialNumberRef, attributeValue fields
+      if (!cfMap[pid].serial) {
+        const fallback = m[2].match(/"(?:unit|serialNumberRef|attributeValue)"\s*:\s*"([^"]+)"/);
+        if (fallback) cfMap[pid].serial = fallback[1];
+      }
+      continue;
+    }
+
+    // OutArgs - try full Ret: line first
+    m = line.match(reOutArgs);
+    if (m && m[1] === pid) {
+      cfMap[pid].outArgs = m[2];
+      continue;
+    }
+
+    // OutArgs - fallback to methodReponseContent line (complete JSON)
+    m = line.match(reMethodResponse);
+    if (m && m[1] === pid) {
+      try {
+        const parsed = JSON.parse(m[2]);
+        const outArgs = parsed?.result?.outArgs;
+        if (outArgs) {
+          cfMap[pid].outArgs = JSON.stringify(outArgs);
+          continue;
+        }
+      } catch(e) {
+        cfMap[pid].outArgs = m[2];
+      }
+      continue;
+    }
+
+    // (old SQL block removed — handled below with API stack support)
+
+    // API entry — push onto stack
+    m = line.match(reApiEntry);
+    if (m && m[1] === pid) {
+      if (!cfMap[pid]._apiStack) cfMap[pid]._apiStack = [];
+      cfMap[pid]._apiStack.push({ name: m[2], params: [], retVal: null, queries: [] });
+      console.log('[API ENTRY] pid='+pid+' name='+m[2]+' stackSize='+cfMap[pid]._apiStack.length);
+      continue;
+    }
+
+    // Capture params into top of stack
+    if (cfMap[pid]._apiStack && cfMap[pid]._apiStack.length) {
+      const top = cfMap[pid]._apiStack[cfMap[pid]._apiStack.length - 1];
+      const paramM = line.match(/>\[([^\]]+)\]:\s*(.+)</);
+      if (paramM && !paramM[1].includes('sessionContext')) {
+        top.params.push({ key: paramM[1], value: paramM[2] });
+      }
+    }
+
+    // SQL paging (PagingDataSourceQuery — no query ID)
+    m = line.match(reSqlPaging);
+    if (m && m[1] === pid) {
+      const entry = { sql: m[2].trim(), queryId: 'paging_' + cfMap[pid].sqlQueries.length, duration: null, rows: null };
+      cfMap[pid].sqlQueries.push(entry);
+      if (cfMap[pid]._apiStack && cfMap[pid]._apiStack.length) cfMap[pid]._apiStack[cfMap[pid]._apiStack.length-1].queries.push(entry);
+      continue;
+    }
+
+    // SQL paging duration
+    m = line.match(reSqlPagingDur);
+    if (m && m[1] === pid) {
+      const last = cfMap[pid].sqlQueries.slice().reverse().find(q => q.queryId && q.queryId.startsWith('paging_') && q.duration === null);
+      if (last) { last.duration = parseInt(m[2]); last.rows = parseInt(m[3]); }
+      continue;
+    }
+
+    // SQL uncontrolled (selectUnc, insert, update, delete)
+    m = line.match(reSqlUnc);
+    if (m && m[1] === pid) {
+      const entry = { sql: m[3].trim(), queryId: 'unc_' + m[2], duration: null, rows: null };
+      cfMap[pid].sqlQueries.push(entry);
+      if (cfMap[pid]._apiStack && cfMap[pid]._apiStack.length) cfMap[pid]._apiStack[cfMap[pid]._apiStack.length-1].queries.push(entry);
+      continue;
+    }
+
+    // SQL uncontrolled duration
+    m = line.match(reSqlUncDur);
+    if (m && m[1] === pid) {
+      const qid = 'unc_' + m[2];
+      const qmatch = cfMap[pid].sqlQueries.slice().reverse().find(q => q.queryId === qid && q.duration === null);
+      if (qmatch) { qmatch.duration = parseInt(m[4]); qmatch.rows = parseInt(m[3]); }
+      continue;
+    }
+
+    // SQL query — capture into pending API if active, else into CF
+    m = line.match(reSql);
+    if (m && m[1] === pid) {
+      const entry = { sql: m[3].trim(), queryId: m[2], duration: null, rows: null };
+      cfMap[pid].sqlQueries.push(entry);
+      if (cfMap[pid]._apiStack && cfMap[pid]._apiStack.length) {
+        cfMap[pid]._apiStack[cfMap[pid]._apiStack.length-1].queries.push(entry);
+        console.log('[SQL->API] pid='+pid+' api='+cfMap[pid]._apiStack[cfMap[pid]._apiStack.length-1].name+' sql='+entry.sql.substring(0,40));
+      } else {
+        console.log('[SQL->CF] pid='+pid+' stack empty, sql='+entry.sql.substring(0,40));
+      }
+      continue;
+    }
+
+    // SQL duration
+    m = line.match(reSqlDuration);
+    if (m && m[1] === pid) {
+      const qid = m[2];
+      // Shared object reference — update in sqlQueries updates API queries too
+      const qmatch = cfMap[pid].sqlQueries.slice().reverse().find(q => q.queryId === qid && q.duration === null);
+      if (qmatch) { qmatch.duration = parseInt(m[3]); qmatch.rows = parseInt(m[4]); }
+      continue;
+    }
+
+    // API return value line
+    m = line.match(reApiRet);
+    if (m && m[1] === pid && cfMap[pid]._apiStack && cfMap[pid]._apiStack.length) {
+      const top = cfMap[pid]._apiStack[cfMap[pid]._apiStack.length - 1];
+      if (top.name === m[2]) top.retVal = m[3].trim();
+      continue;
+    }
+
+    // API exit line
+    m = line.match(reApiCall);
+    if (m && m[1] === pid) {
+      const call = {
+        name: m[2], duration: parseInt(m[3]), returnValue: parseInt(m[4]),
+        params: [], retVal: null, queries: []
+      };
+      if (cfMap[pid]._apiStack && cfMap[pid]._apiStack.length) {
+        const idx2 = cfMap[pid]._apiStack.map(a=>a.name).lastIndexOf(m[2]);
+        if (idx2 !== -1) {
+          const popped = cfMap[pid]._apiStack.splice(idx2, 1)[0];
+          call.params  = popped.params;
+          call.retVal  = popped.retVal;
+          call.queries = popped.queries;
+        }
+      }
+      cfMap[pid].apiCalls.push(call);
+      continue;
+    }
+
+    // Serial from parameter lines
+    if (!cfMap[pid].serial) {
+      const serialParam = line.match(/>\[serialNumber[^\]]*\]:\s*([^<]+)</);
+      if (serialParam) cfMap[pid].serial = serialParam[1].trim();
+    }
+
+    // Station from thread
+    if (!cfMap[pid].station) {
+      const s2 = line.match(reStation2);
+      if (s2) cfMap[pid].station = s2[1];
+    }
+  }
+
+  const result = Object.values(cfMap).filter(cf => cf.returnValue !== null || cf.duration !== null);
+  console.log('[MES] parseLog done. cfMap keys:', Object.keys(cfMap).length, 'filtered:', result.length);
+  // Test: find first CF with apiCalls and check its raw lines for API entry pattern
+  const testCF = result.find(c => c.apiCalls.length > 0);
+  if (testCF) {
+    const reTest = /\[(?:[^\]]*\.)?customFunction:(\d+)[^\]]*\].*>Entry method IMSApiServiceBean\.([A-Za-z][A-Za-z0-9_]+)\s*</;
+    const entryLines = testCF.lines.filter(l => reTest.test(l));
+    console.log('[TEST] CF pid='+testCF.pid+' apiCalls='+testCF.apiCalls.length+' lines='+testCF.lines.length);
+    console.log('[TEST] Entry lines found in raw lines:', entryLines.length);
+    if (entryLines.length) console.log('[TEST] First entry line:', entryLines[0]);
+    else console.log('[TEST] Sample line:', testCF.lines[5]);
+  }
+  if (result.length > 0) console.log('[MES] sample CF:', JSON.stringify(result[0]));
+  return result;
+}
+
+// ── Build dashboard ────────────────────────────────────────────────
+function buildDashboard() {
+  console.log('[MES] buildDashboard called, allCFs.length =', allCFs.length);
+  document.getElementById('parse-progress').style.display = 'none';
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('reset-btn').style.display = '';
+
+  // Populate filter dropdowns
+  const stations = [...new Set(allCFs.map(c => c.station).filter(Boolean))].sort();
+  const methods  = [...new Set(allCFs.map(c => c.method).filter(Boolean))].sort();
+  const rvs      = [...new Set(allCFs.map(c => c.returnValue).filter(v => v !== null))].sort((a,b) => a-b);
+
+  populateSelect('filter-station', stations);
+  populateSelect('filter-method', methods);
+  populateSelect('filter-rv', rvs);
+
+  filteredCFs = [...allCFs];
+  renderAll();
+}
+
+function populateSelect(id, values) {
+  const sel = document.getElementById(id);
+  values.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v;
+    sel.appendChild(o);
+  });
+}
+
+// ── Filters ────────────────────────────────────────────────────────
+function applyFilters() {
+  const st = document.getElementById('filter-station').value;
+  const me = document.getElementById('filter-method').value;
+  const rv = document.getElementById('filter-rv').value;
+
+  filteredCFs = allCFs.filter(cf => {
+    if (st && cf.station !== st) return false;
+    if (me && cf.method !== me) return false;
+    if (rv && String(cf.returnValue) !== rv) return false;
+    return true;
+  });
+  renderAll();
+}
+
+function renderAll() {
+  renderKPIs();
+  renderCharts();
+  renderTable();
+}
+
+// ── KPIs ───────────────────────────────────────────────────────────
+function renderKPIs() {
+  const cfs = filteredCFs;
+  const total = cfs.length;
+  const ok = cfs.filter(c => c.returnValue === 0).length;
+  const fail = total - ok;
+  const durations = cfs.map(c => c.duration).filter(d => d !== null);
+  const avgDur = durations.length ? Math.round(durations.reduce((a,b) => a+b, 0) / durations.length) : 0;
+  const maxDur = durations.length ? Math.max(...durations) : 0;
+  const successPct = total ? ((ok / total) * 100).toFixed(1) : '0.0';
+
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-success').textContent = successPct + '%';
+  document.getElementById('kpi-ok-count').textContent = ok + ' OK / ' + total + ' total';
+  document.getElementById('kpi-avgdur').textContent = avgDur + ' ms';
+  document.getElementById('kpi-maxdur').textContent = 'max: ' + maxDur + ' ms';
+  document.getElementById('kpi-fail').textContent = fail;
+  document.getElementById('kpi-fail-sub').textContent = fail ? 'unique codes: ' + [...new Set(cfs.filter(c=>c.returnValue!==0).map(c=>c.returnValue))].length : 'all successful';
+
+  // Timespan
+  const timestamps = cfs.map(c => c.timestamp).filter(Boolean);
+  if (timestamps.length >= 2) {
+    document.getElementById('kpi-timespan').textContent = timestamps[0] + ' → ' + timestamps[timestamps.length-1];
+  }
+}
+
+// ── Charts ─────────────────────────────────────────────────────────
+const CHART_COLORS = ['#4f8ef7','#38d9a9','#f7934f','#f75f5f','#a78bfa','#f7c34f','#34d399','#fb7185','#60a5fa','#fbbf24'];
+
+function renderCharts() {
+  renderRVChart();
+  renderMethodsChart();
+  renderTimelineChart();
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderRVChart() {
+  destroyChart('rv');
+  const counts = {};
+  filteredCFs.forEach(cf => {
+    const k = String(cf.returnValue ?? 'unknown');
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const labels = Object.keys(counts);
+  const data = labels.map(k => counts[k]);
+  const colors = labels.map((l, i) => l === '0' ? '#38d9a9' : CHART_COLORS[i % CHART_COLORS.length]);
+
+  charts['rv'] = new Chart(document.getElementById('chart-rv'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#8892a4', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 12, padding: 8 } }
+      }
+    }
+  });
+}
+
+function renderMethodsChart() {
+  destroyChart('methods');
+  const counts = {};
+  filteredCFs.forEach(cf => { if (cf.method) counts[cf.method] = (counts[cf.method] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,10);
+  const labels = sorted.map(e => e[0].length > 28 ? '…'+e[0].slice(-26) : e[0]);
+  const data = sorted.map(e => e[1]);
+
+  charts['methods'] = new Chart(document.getElementById('chart-methods'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: '#4f8ef7', borderRadius: 4, borderWidth: 0 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1c2030' }, ticks: { color: '#4a5268', font: { family: 'IBM Plex Mono', size: 10 } } },
+        y: { grid: { display: false }, ticks: { color: '#8892a4', font: { family: 'IBM Plex Mono', size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderTimelineChart() {
+  destroyChart('timeline');
+  // Bucket by hour
+  const buckets = {};
+  filteredCFs.forEach(cf => {
+    if (!cf.timestamp) return;
+    const hourKey = cf.timestamp.substring(0, 14) + '00';
+    buckets[hourKey] = (buckets[hourKey] || 0) + 1;
+  });
+  const sorted = Object.entries(buckets).sort((a,b) => a[0].localeCompare(b[0]));
+  const labels = sorted.map(e => e[0]);
+  const data = sorted.map(e => e[1]);
+
+  charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data, borderColor: '#38d9a9', backgroundColor: 'rgba(56,217,169,0.08)',
+        fill: true, tension: 0.3, pointRadius: 2, borderWidth: 1.5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1c2030' }, ticks: { color: '#4a5268', font: { family: 'IBM Plex Mono', size: 9 }, maxTicksLimit: 6 } },
+        y: { grid: { color: '#1c2030' }, ticks: { color: '#4a5268', font: { family: 'IBM Plex Mono', size: 10 } } }
+      }
+    }
+  });
+}
+
+// ── Sort ──────────────────────────────────────────────────────────
+function toggleSort(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = col;
+    sortDir = 'asc';
+  }
+  const icon = document.getElementById('sort-icon');
+  if (icon) icon.textContent = sortDir === 'asc' ? '↑' : '↓';
+  renderTable();
+}
+
+// ── Table ──────────────────────────────────────────────────────────
+function renderTable() {
+  const search = document.getElementById('search-box').value.toLowerCase();
+  const rows = filteredCFs.filter(cf => {
+    if (!search) return true;
+    return [cf.pid, cf.method, cf.station, cf.serial, String(cf.returnValue)].some(v => v && v.toLowerCase().includes(search));
+  });
+
+  // Apply sort
+  rows.sort((a, b) => {
+    const av = a.timestamp || '';
+    const bv = b.timestamp || '';
+    return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+
+  document.getElementById('table-count').textContent = rows.length;
+  const tbody = document.getElementById('cf-tbody');
+  tbody.innerHTML = '';
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No results</td></tr>';
+    return;
+  }
+
+  rows.forEach(cf => {
+    const tr = document.createElement('tr');
+    if (cf.pid === selectedPid) tr.classList.add('selected');
+    tr.onclick = () => openDetail(cf.pid);
+    const rv = cf.returnValue;
+    const badge = rv === 0 ? `<span class="badge badge-ok">0</span>`
+      : rv === null ? `<span class="badge badge-warn">—</span>`
+      : `<span class="badge badge-err">${rv}</span>`;
+    const durColor = cf.duration > 1000 ? 'color:var(--danger)' : cf.duration > 100 ? 'color:var(--warning)' : 'color:var(--text2)';
+    tr.innerHTML = `
+      <td class="pid">${cf.pid}</td>
+      <td>${cf.timestamp || '—'}</td>
+      <td style="color:var(--text)">${cf.method || '—'}</td>
+      <td>${cf.station || '—'}</td>
+      <td>${cf.serial || '—'}</td>
+      <td style="${durColor}">${cf.duration !== null ? cf.duration + ' ms' : '—'}</td>
+      <td>${badge}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Detail panel ───────────────────────────────────────────────────
+function openDetail(pid) {
+  selectedPid = pid;
+  const cf = allCFs.find(c => c.pid === pid);
+  if (!cf) return;
+
+  document.getElementById('detail-pid').textContent = pid;
+  document.getElementById('detail-panel').style.display = 'block';
+  document.getElementById('detail-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Re-mark selected row
+  document.querySelectorAll('#cf-tbody tr').forEach(tr => tr.classList.remove('selected'));
+  const rows = document.querySelectorAll('#cf-tbody tr');
+  rows.forEach(tr => { if (tr.querySelector('.pid')?.textContent === pid) tr.classList.add('selected'); });
+
+  switchTab(currentTab, cf);
+}
+
+function closeDetail() {
+  selectedPid = null;
+  document.getElementById('detail-panel').style.display = 'none';
+  document.querySelectorAll('#cf-tbody tr').forEach(tr => tr.classList.remove('selected'));
+}
+
+function switchTab(tab, cf) {
+  currentTab = tab;
+  cf = cf || allCFs.find(c => c.pid === selectedPid);
+  if (!cf) return;
+
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.detail-tab').forEach(t => { if (t.textContent.toLowerCase().replace(' ','') === tab) t.classList.add('active'); });
+
+  const content = document.getElementById('detail-content');
+
+  if (tab === 'inargs') {
+    if (!cf.inArgs) { content.innerHTML = '<div class="empty">No inArgs found</div>'; return; }
+    try {
+      const parsed = JSON.parse(cf.inArgs);
+      content.innerHTML = `<pre style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent2);white-space:pre-wrap;word-break:break-all">${JSON.stringify(parsed, null, 2)}</pre>`;
+    } catch {
+      content.innerHTML = `<div class="log-line">${cf.inArgs}</div>`;
+    }
+  } else if (tab === 'outargs') {
+    if (!cf.outArgs) { content.innerHTML = '<div class="empty">No outArgs found</div>'; return; }
+    try {
+      const parsed = JSON.parse(cf.outArgs);
+      content.innerHTML = `<pre style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent3);white-space:pre-wrap;word-break:break-all">${JSON.stringify(parsed, null, 2)}</pre>`;
+    } catch {
+      content.innerHTML = `<div class="log-line">${cf.outArgs}</div>`;
+    }
+  } else if (tab === 'queries') {
+    if (!cf.sqlQueries.length) { content.innerHTML = '<div class="empty">No SQL queries found</div>'; return; }
+    content.innerHTML = cf.sqlQueries.map((q, i) => {
+      const sql = typeof q === 'string' ? q : q.sql;
+      const dur = typeof q === 'object' ? q.duration : null;
+      const rows = typeof q === 'object' ? q.rows : null;
+      const durColor = dur > 1000 ? 'var(--danger)' : dur > 100 ? 'var(--warning)' : 'var(--accent2)';
+      const meta = dur !== null
+        ? `<span style="color:${durColor};margin-left:8px">${dur}ms</span><span style="color:var(--text3);margin-left:8px">${rows} row(s)</span>`
+        : '';
+      return `<div style="margin-bottom:12px">
+        <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:4px;display:flex;align-items:center">
+          <span>Query ${i+1}</span>${meta}
+        </div>
+        <pre style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);white-space:pre-wrap;word-break:break-all;background:var(--bg3);padding:10px;border-radius:6px;border:1px solid var(--border)">${sql}</pre>
+      </div>`;
+    }).join('');
+  } else if (tab === 'apicalls') {
+    if (!cf.apiCalls.length) { content.innerHTML = '<div class="empty">No API calls found</div>'; return; }
+    const maxDur = Math.max(...cf.apiCalls.map(a => a.duration), 1);
+    const html = cf.apiCalls.map((a, idx) => {
+      const pct = (a.duration / maxDur * 100).toFixed(1);
+      const color = a.duration > 1000 ? 'var(--danger)' : a.duration > 100 ? 'var(--warning)' : 'var(--accent)';
+      const rvBadge = a.returnValue === 0
+        ? `<span style="color:var(--accent2);font-size:10px;margin-left:6px">✓ ${a.returnValue}</span>`
+        : `<span style="color:var(--danger);font-size:10px;margin-left:6px">✗ ${a.returnValue}</span>`;
+      return `<div class="api-bar-row" style="cursor:pointer;padding:4px;border-radius:4px;transition:background 0.1s"
+        onclick="toggleApiDetail(this, ${idx})"
+        onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background='transparent'">
+        <div class="api-bar-label" title="${a.name}" style="color:var(--text)">${a.name}${rvBadge}</div>
+        <div class="api-bar-track"><div class="api-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="api-bar-val" style="color:${color}">${a.duration} ms</div>
+      </div>
+      <div id="api-detail-${idx}" style="display:none;margin:4px 0 8px 0;padding:10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border)"></div>`;
+    }).join('');
+    content.innerHTML = `<div class="api-bars" id="api-bars-container">${html}</div>`;
+
+    // Store cf reference for toggleApiDetail
+    content._cf = cf;
+    window._currentApiCf = cf;
+  } else if (tab === 'raw') {
+    const html = cf.lines.map(line => {
+      const lvl = line.match(/\[(INFO|DEBUG|WARN|ERROR)\]/);
+      const level = lvl ? lvl[1].toLowerCase() : 'debug';
+      const escaped = line.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `<div class="log-line"><span class="level-${level}">[${level.toUpperCase()}]</span> ${escaped}</div>`;
+    }).join('');
+    content.innerHTML = `<div class="log-lines">${html || '<div class="empty">No raw lines captured</div>'}</div>`;
+  }
+}
+
+// ── API detail toggle ─────────────────────────────────────────────
+function toggleApiDetail(row, idx) {
+  const panel = document.getElementById('api-detail-' + idx);
+  if (!panel) return;
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+
+  const cf = window._currentApiCf;
+  if (!cf) return;
+  const a = cf.apiCalls[idx];
+  if (!a) return;
+  // Check all apiCalls to find one with queries
+  const withQueries = cf.apiCalls.filter(x => x.queries && x.queries.length > 0);
+  const sqlTotal = cf.sqlQueries ? cf.sqlQueries.length : 0;
+  alert('API: ' + a.name + '\nparams: ' + a.params.length + '\nqueries: ' + a.queries.length + 
+    '\n\nTotal CF sqlQueries: ' + sqlTotal +
+    '\nAPI calls with queries: ' + withQueries.length + ' of ' + cf.apiCalls.length +
+    '\n\nAll API names: ' + cf.apiCalls.map(x=>x.name+'(q:'+x.queries.length+')').join(', '));
+
+  let html = '';
+
+  // Params
+  if (a.params && a.params.length) {
+    html += `<div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em">Inputs (${a.params.length})</div>`;
+    html += `<div style="margin-bottom:10px">` + a.params.map(p =>
+      `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:2px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--accent)">${p.key}</span>
+        <span style="color:var(--text3)">: </span>
+        <span style="color:var(--text2)">${p.value.length > 120 ? p.value.substring(0,120)+'...' : p.value}</span>
+      </div>`
+    ).join('') + `</div>`;
+  }
+
+  // Return value
+  const rvColor = a.returnValue === 0 ? 'var(--accent2)' : 'var(--danger)';
+  html += `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;margin-bottom:10px">
+    <span style="color:var(--text3)">Return value: </span>
+    <span style="color:${rvColor};font-weight:500">${a.returnValue}</span>
+    ${a.retVal ? `<span style="color:var(--text3);margin-left:12px">${a.retVal.substring(0,120)}${a.retVal.length>120?'...':''}</span>` : ''}
+  </div>`;
+
+  // Queries
+  if (a.queries && a.queries.length) {
+    html += `<div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em">SQL Queries (${a.queries.length})</div>`;
+    html += a.queries.map((q, qi) => {
+      const durColor = q.duration > 1000 ? 'var(--danger)' : q.duration > 100 ? 'var(--warning)' : 'var(--accent2)';
+      const meta = q.duration !== null
+        ? `<span style="color:${durColor};margin-left:8px">${q.duration}ms</span><span style="color:var(--text3);margin-left:6px">${q.rows} row(s)</span>`
+        : '';
+      return `<div style="margin-bottom:8px">
+        <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;display:flex;align-items:center">
+          <span>Q${qi+1}</span>${meta}
+        </div>
+        <pre style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent);white-space:pre-wrap;word-break:break-all;background:var(--bg);padding:8px;border-radius:4px;border:1px solid var(--border);margin:0">${q.sql}</pre>
+      </div>`;
+    }).join('');
+  } else {
+    html += `<div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace">No SQL queries captured for this API call</div>`;
+  }
+
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+}
+
+// ── Reset ──────────────────────────────────────────────────────────
+function resetApp() {
+  allCFs = []; filteredCFs = []; selectedPid = null;
+  Object.values(charts).forEach(c => c.destroy()); charts = {};
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('upload-zone').style.display = 'flex';
+  document.getElementById('parse-progress').style.display = 'none';
+  document.getElementById('drop-box').style.display = '';
+  document.getElementById('reset-btn').style.display = 'none';
+  document.getElementById('file-status').textContent = 'no file loaded';
+  document.getElementById('file-status').classList.remove('loaded');
+  const fi2 = document.getElementById('file-input'); fi2.value = ''; try { fi2.value = null; } catch(e) {}
+  document.getElementById('filter-station').innerHTML = '<option value="">All stations</option>';
+  document.getElementById('filter-method').innerHTML = '<option value="">All methods</option>';
+  document.getElementById('filter-rv').innerHTML = '<option value="">All return values</option>';
+  document.getElementById('detail-panel').style.display = 'none';
+}
+
+// ── URL params: ?theme=light&kiosk=true&hideLogo=true ──────────────
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const theme = params.get('theme');
+  if (theme === 'light' || theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+  if (params.get('kiosk') === 'true' || params.get('kiosk') === '1') {
+    document.body.classList.add('kiosk');
+  }
+  if (params.get('hideLogo') === 'true' || params.get('hideLogo') === '1') {
+    document.body.classList.add('hide-logo');
+  }
+})();
+<\/script>
+</body>
+</html>
+</script>
+<script type="text/plain" id="src-json">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JSON Validator</title>
+<style>
+:root{
+  --bg:#0d0d0d;--nav:#111214;--panel:#161719;--ink:#ececec;--muted:#8b8f98;--line:#26282c;
+  --accent:#2f9e7a;--accent-ink:#fff;--err:#ff6b5e;--err-bg:#2a1614;--mark:rgba(255,107,94,.45);--ok:#3ecf9b;--ok-bg:#12261f;
+  --d0:#6cb2ff;--d1:#b69cff;--d2:#5fd7e8;--d3:#e6c34a;--d4:#f08bd0;--d5:#a8b3c7;--s:#8bd17c;--n:#ff9f5a;--l:#ff7b72;
+  color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f5f6f8;--nav:#fff;--panel:#fff;--ink:#1a1d24;--muted:#667085;--line:#dcdfe6;
+  --accent:#0f7a5c;--err:#b42318;--err-bg:#fdecea;--mark:rgba(180,35,24,.3);--ok:#0f7a5c;--ok-bg:#e6f5ef;
+  --d0:#1f6fd1;--d1:#6f4fd1;--d2:#0f8aa3;--d3:#a07800;--d4:#c1359a;--d5:#5b6577;--s:#2e7d32;--n:#c2561b;--l:#c0392b;color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f5f6f8;--nav:#fff;--panel:#fff;--ink:#1a1d24;--muted:#667085;--line:#dcdfe6;
+  --accent:#0f7a5c;--err:#b42318;--err-bg:#fdecea;--mark:rgba(180,35,24,.3);--ok:#0f7a5c;--ok-bg:#e6f5ef;
+  --d0:#1f6fd1;--d1:#6f4fd1;--d2:#0f8aa3;--d3:#a07800;--d4:#c1359a;--d5:#5b6577;--s:#2e7d32;--n:#c2561b;--l:#c0392b;color-scheme:light}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.nav{background:var(--nav);border-bottom:1px solid var(--line)}
+.nav .in{max-width:1000px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:10px}
+.logo{height:30px;width:30px;border-radius:7px;object-fit:contain}
+.brand{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
+.tabs{max-width:1000px;margin:0 auto;padding:12px 20px 0;display:flex;gap:6px}
+.tab{padding:6px 14px;border-radius:99px;font-size:.92rem;color:var(--ink);background:var(--panel);border:1px solid var(--line);font-weight:600}
+main{max-width:1000px;margin:0 auto;padding:22px 20px 40px}
+h1{font-size:2rem;line-height:1.2;margin:8px 0 6px;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 18px}
+.editor{position:relative;height:min(52vh,460px);min-height:260px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+.editor:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
+.editor textarea,.editor pre.back{position:absolute;inset:0;margin:0;width:100%;height:100%;border:0;padding:12px 12px 12px 58px;font:13.5px/21px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;tab-size:2;white-space:pre}
+textarea{background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:var(--ink);resize:none;outline:none;overflow:auto}
+textarea::placeholder{color:var(--muted);-webkit-text-fill-color:var(--muted)}
+textarea::selection{background:color-mix(in srgb,var(--accent) 45%,transparent)}
+pre.back{overflow:hidden;color:var(--ink);pointer-events:none}
+pre.gut{position:absolute;left:0;top:0;bottom:0;margin:0;width:46px;padding:12px 8px 12px 0;font:13.5px/21px ui-monospace,Menlo,Consolas,monospace;text-align:right;color:var(--muted);background:var(--nav);border-right:1px solid var(--line);overflow:hidden;pointer-events:none;user-select:none}
+.gut i{font-style:normal;display:block}
+.gut i.bad{color:var(--err);font-weight:700}
+.eband{position:absolute;left:0;right:0;height:21px;top:0;background:var(--err-bg);pointer-events:none}
+.d0{color:var(--d0)}.d1{color:var(--d1)}.d2{color:var(--d2)}.d3{color:var(--d3)}.d4{color:var(--d4)}.d5{color:var(--d5)}
+.str{color:var(--s)}.num{color:var(--n)}.lit{color:var(--l)}
+.mark{background:var(--mark);box-shadow:0 2px 0 var(--err);border-radius:2px}
+.mt{background:color-mix(in srgb,var(--accent) 38%,transparent);outline:1px solid var(--accent);border-radius:2px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+#match{margin-left:auto;color:var(--muted);font:.85rem ui-monospace,Menlo,Consolas,monospace}
+button{font:inherit;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 16px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#result{border-radius:10px;padding:14px 16px;border:1px solid var(--line);color:var(--muted)}
+#result.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+#result.bad{background:var(--err-bg);border-color:var(--err);color:var(--err)}
+#result strong{display:block;font-size:1.05rem}
+h2{font-size:1.15rem;margin:34px 0 8px}
+.help{color:var(--muted);max-width:74ch}
+.help li{margin:4px 0}
+.help code{font:.88em ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--panel);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;padding:18px 20px;text-align:center}
+</style>
+<style>/* injected by shell */.nav,.tabs{display:none}</style>
+</head>
+<body>
+<div class="nav"><div class="in">
+  <\!-- LOGO: replace the src with your own image. In a published page use a data: URI (data:image/png;base64,...) since remote images are blocked. -->
+  <img class="logo" alt="Logo" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='rgb(47,158,122)'/><text x='16' y='21' font-size='14' font-family='monospace' font-weight='bold' text-anchor='middle' fill='white'>{ }</text></svg>">
+  <span class="brand">JSON Validator</span>
+</div></div>
+<nav class="tabs" aria-label="Tools"><span class="tab" aria-current="page">Validate</span></nav>
+
+<main>
+  <h1>JSON Validator and Formatter</h1>
+  <p class="sub">To format and validate your JSON, just copy + paste it below. Click next to any bracket to see its partner.</p>
+
+  <div class="editor">
+    <div class="eband" id="band" hidden></div>
+    <pre class="back" id="back" aria-hidden="true"></pre>
+    <pre class="gut" id="gut" aria-hidden="true"></pre>
+    <textarea id="in" spellcheck="false" placeholder='{"hello": "world"}' aria-label="JSON input"></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="validate" type="button">Validate JSON</button>
+    <button id="compress" type="button">Compress</button>
+    <button id="stringify" type="button">Stringify</button>
+    <button id="unstringify" type="button">Unstringify</button>
+    <button id="clear" type="button">Clear</button>
+    <span id="match" aria-live="polite"></span>
+  </div>
+  <div id="result" role="status" aria-live="polite">Click “Validate JSON” (or press Ctrl/Cmd + Enter) to check your input.</div>
+
+  <h2>Common errors</h2>
+  <ul class="help">
+    <li>A trailing comma after the last item, like <code>{"a": 1,}</code> or <code>[1, 2,]</code>.</li>
+    <li>Keys or strings in single quotes. JSON only allows double quotes.</li>
+    <li>Unquoted keys, like <code>{name: "Ada"}</code>.</li>
+    <li>Comments, which JSON does not support.</li>
+    <li>Numbers with leading zeros, like <code>007</code>.</li>
+  </ul>
+</main>
+<footer>Runs entirely in your browser. Nothing is uploaded.</footer>
+
+<\script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var ta=$("in"),back=$("back"),gut=$("gut"),band=$("band"),res=$("result"),info=$("match");
+  var curErr=null,toks=[],posTok={},match=null,EMPTY="Click “Validate JSON” (or press Ctrl/Cmd + Enter) to check your input.";
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function lc(s,p){var b=s.slice(0,p);return {line:b.split("\n").length,col:p-b.lastIndexOf("\n")};}
+
+  /* ---------- validator (returns null or {pos,msg,line,col}) ---------- */
+  function check(s){
+    var i=0;
+    function fail(m,p){throw {pos:p===undefined?i:p,msg:m};}
+    function ws(){while(i<s.length&&" \t\n\r".indexOf(s[i])>-1)i++;}
+    function str(){
+      var st=i;i++;
+      for(;;){var c=s[i];
+        if(c===undefined)fail("Unterminated string (missing closing quote)",st);
+        if(c==='"'){i++;return;}
+        if(c==="\\"){var n=s[i+1];
+          if(n!==undefined&&'"\\/bfnrt'.indexOf(n)>-1)i+=2;
+          else if(n==="u"&&/^[0-9a-fA-F]{4}$/.test(s.substr(i+2,4)))i+=6;
+          else fail("Invalid escape sequence in string");
+        }else if(c<" ")fail("Unescaped line break or control character in string");
+        else i++;}
+    }
+    function val(){
+      var c=s[i];
+      if(c===undefined)fail("Unexpected end of input");
+      if(c==="{")return obj(); if(c==="[")return arr(); if(c==='"')return str();
+      if(c==="-"||(c>="0"&&c<="9")){var re=/-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?/y;re.lastIndex=i;var m=re.exec(s);if(!m)fail("Invalid number");i+=m[0].length;return;}
+      var w=["true","false","null"];
+      for(var k=0;k<3;k++)if(s.startsWith(w[k],i)){i+=w[k].length;return;}
+      if(c==="'")fail("Strings must use double quotes, not single quotes");
+      if(c==="/")fail("Comments are not allowed in JSON");
+      fail("Unexpected character '"+c+"'");
+    }
+    function obj(){
+      i++;ws();if(s[i]==="}"){i++;return;}
+      for(;;){ws();
+        if(s[i]!=='"')fail(s[i]===undefined?"Unexpected end of input":"Expected a property name in double quotes");
+        str();ws();if(s[i]!==":")fail("Expected ':' after property name");
+        i++;ws();val();ws();
+        if(s[i]===","){var cp=i;i++;ws();if(s[i]==="}")fail("Trailing comma is not allowed",cp);continue;}
+        if(s[i]==="}"){i++;return;}
+        fail(s[i]===undefined?"Unexpected end of input (missing '}')":"Expected ',' or '}' here");}
+    }
+    function arr(){
+      i++;ws();if(s[i]==="]"){i++;return;}
+      for(;;){ws();val();ws();
+        if(s[i]===","){var cp=i;i++;ws();if(s[i]==="]")fail("Trailing comma is not allowed",cp);continue;}
+        if(s[i]==="]"){i++;return;}
+        fail(s[i]===undefined?"Unexpected end of input (missing ']')":"Expected ',' or ']' here");}
+    }
+    try{ws();val();ws();if(i<s.length)fail("Unexpected extra data after the JSON value");return null;}
+    catch(e){if(e&&e.pos===undefined)throw e;var l=lc(s,e.pos);return {pos:e.pos,msg:e.msg,line:l.line,col:l.col};}
+  }
+
+  /* ---------- tokenizer: colors by depth/type, pairs brackets ---------- */
+  function tokenize(s){
+    var re=/"(?:\\.|[^"\\\n])*"?|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:true|false|null)\b|[{}\[\]]|\s+|[\s\S]/g,kre=/\s*:/y;
+    var out=[],stack=[],m;
+    while((m=re.exec(s))){
+      var t=m[0],st=m.index,en=st+t.length,c=t[0],cls="",tok={t:t,st:st,en:en};
+      if(c==='"'){kre.lastIndex=en;cls=kre.test(s)?"d"+(stack.length%6):"str";}
+      else if(c==="{"||c==="["){cls="d"+(stack.length%6);tok.open=true;stack.push({i:out.length,c:c});}
+      else if(c==="}"||c==="]"){
+        var top=stack[stack.length-1];
+        if(top&&((top.c==="{"&&c==="}")||(top.c==="["&&c==="]"))){stack.pop();tok.match=top.i;out[top.i].match=out.length;}
+        cls="d"+(Math.max(stack.length,0)%6);tok.close=true;
+      }
+      else if(c==="-"||(c>="0"&&c<="9"))cls="num";
+      else if(t.length>1&&/^(true|false|null)$/.test(t))cls="lit";
+      tok.cls=cls;out.push(tok);
+    }
+    return out;
+  }
+
+  /* ---------- painting ---------- */
+  function seg(text,st,hls){
+    var any=false,k;for(k=0;k<text.length;k++)if(hls[st+k]){any=true;break;}
+    if(!any)return esc(text);
+    var o="",buf="";
+    for(k=0;k<text.length;k++){
+      var ch=text[k],h=hls[st+k];
+      if(!h){buf+=ch;continue;}
+      o+=esc(buf);buf="";
+      o+=ch==="\n"?'<span class="'+h+'"> </span>\n':'<span class="'+h+'">'+esc(ch)+"</span>";
+    }
+    return o+esc(buf);
+  }
+  function computeMatch(s){
+    if(document.activeElement!==ta||ta.selectionStart!==ta.selectionEnd)return null;
+    var a=ta.selectionStart,cand=[a,a-1];
+    for(var j=0;j<2;j++){
+      var ti=posTok[cand[j]];if(ti===undefined)continue;
+      var tk=toks[ti],p=lc(s,tk.st),where=tk.t+" at line "+p.line+", col "+p.col;
+      if(tk.match===undefined)return {a:tk.st,b:null,info:"No matching bracket for "+where};
+      var pt=toks[tk.match],q=lc(s,pt.st);
+      return {a:tk.st,b:pt.st,info:where+"  \u2194  "+pt.t+" at line "+q.line+", col "+q.col};
+    }
+    return null;
+  }
+  function paint(retok){
+    var s=ta.value,k;
+    if(retok!==false){
+      toks=tokenize(s);posTok={};
+      toks.forEach(function(t,i){if(t.open||t.close)posTok[t.st]=i;});
+    }
+    match=computeMatch(s);
+    var hls={};
+    if(curErr)hls[curErr.pos]="mark";
+    if(match){hls[match.a]="mt";if(match.b!==null)hls[match.b]="mt";}
+    var html="";
+    for(k=0;k<toks.length;k++){var t=toks[k],inner=seg(t.t,t.st,hls);html+=t.cls?'<span class="'+t.cls+'">'+inner+"</span>":inner;}
+    if(curErr&&curErr.pos>=s.length)html+='<span class="mark"> </span>';
+    back.innerHTML=html+"\n";
+    info.textContent=match?match.info:"";
+    var n=s.split("\n").length,g="";
+    for(var l=1;l<=n;l++)g+=(curErr&&curErr.line===l)?'<i class="bad">'+l+"</i>":"<i>"+l+"</i>";
+    gut.innerHTML=g;
+    sync();
+  }
+  function sync(){
+    back.scrollTop=gut.scrollTop=ta.scrollTop;back.scrollLeft=ta.scrollLeft;
+    band.hidden=!curErr;
+    if(curErr)band.style.transform="translateY("+(12+(curErr.line-1)*21-ta.scrollTop)+"px)";
+  }
+  function show(kind,title,detail){
+    res.className=kind;res.innerHTML="<strong></strong>";res.firstChild.textContent=title;
+    if(detail){var d=document.createElement("div");d.textContent=detail;res.appendChild(d);}
+  }
+  function reportError(s,title){
+    show("bad",title||"Invalid JSON","Line "+curErr.line+", column "+curErr.col+": "+curErr.msg);
+    ta.setSelectionRange(curErr.pos,Math.min(curErr.pos+1,s.length));
+    ta.scrollTop=Math.max(0,(curErr.line-4)*21);sync();
+  }
+
+  /* ---------- actions ---------- */
+  function empty(){show("","Nothing to do","Paste or type some JSON above.");}
+  function validate(mode){
+    var s=ta.value;
+    if(!s.trim()){curErr=null;paint();empty();return;}
+    curErr=check(s);paint();
+    if(curErr){reportError(s);return;}
+    var v=JSON.parse(s);
+    ta.value=mode==="compress"?JSON.stringify(v):JSON.stringify(v,null,2);
+    paint();
+    show("ok","Valid JSON",mode==="compress"?"Compressed to a single line.":"Your JSON is valid and has been reformatted.");
+  }
+  function stringify(){
+    var s=ta.value;
+    if(!s.trim()){empty();return;}
+    var valid=!check(s),t=valid?JSON.stringify(JSON.parse(s)):s;
+    ta.value=JSON.stringify(t);curErr=null;paint();
+    show("ok","Stringified",valid?"Your JSON was compressed and escaped into a single JSON string.":"Input wasn't valid JSON, so it was escaped as plain text.");
+  }
+  function unstringify(){
+    var s=ta.value;
+    if(!s.trim()){empty();return;}
+    curErr=check(s);paint();
+    if(curErr){reportError(s,"Can't unstringify: input isn't valid JSON");return;}
+    var v=JSON.parse(s);
+    if(typeof v!=="string"){show("bad","Not an escaped string","Unstringify expects text wrapped in double quotes, like \"{\\\"a\\\":1}\".");return;}
+    var out=v,pretty=v.trim()&&!check(v);
+    if(pretty)out=JSON.stringify(JSON.parse(v),null,2);
+    ta.value=out;paint();
+    show("ok","Unstringified",pretty?"Unescaped the string and formatted the JSON inside it.":"Unescaped the string. Run it again if it is still escaped.");
+  }
+  $("validate").onclick=function(){validate("format");};
+  $("compress").onclick=function(){validate("compress");};
+  $("stringify").onclick=stringify;
+  $("unstringify").onclick=unstringify;
+  $("clear").onclick=function(){ta.value="";curErr=null;paint();res.className="";res.textContent=EMPTY;ta.focus();};
+  ta.addEventListener("input",function(){curErr=null;paint();});
+  ta.addEventListener("scroll",sync);
+  ta.addEventListener("keydown",function(e){if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();validate("format");}});
+  document.addEventListener("selectionchange",function(){
+    if(document.activeElement!==ta&&!match)return;
+    var m=computeMatch(ta.value);
+    if(JSON.stringify(m)!==JSON.stringify(match))paint(false);
+  });
+  paint();
+})();
+<\/script>
+</body>
+</html>
+</script>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);},root=document.documentElement;
+  var tools=["log","json"],theme=matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";
+  function applyTo(f){try{f.contentDocument.documentElement.setAttribute("data-theme",theme);}catch(e){}}
+  function setTheme(t){theme=t;root.setAttribute("data-theme",t);tools.forEach(function(k){applyTo($("f-"+k));});}
+  tools.forEach(function(k){$("f-"+k).addEventListener("load",function(){applyTo(this);});});
+  function load(k){
+    var f=$("f-"+k);if(f.dataset.loaded)return;
+    f.dataset.loaded="1";
+    f.srcdoc=$("src-"+k).textContent.replace(/^\n/,"").replace(/<\\(!--|\/?script)/gi,"<$1");
+  }
+  function select(k){
+    tools.forEach(function(t){
+      $("f-"+t).hidden=t!==k;
+      $("tab-"+t).setAttribute("aria-selected",t===k);
+    });
+    load(k);
+    try{history.replaceState(null,"","#"+k);}catch(e){}
+  }
+  tools.forEach(function(k){$("tab-"+k).onclick=function(){select(k);};});
+  $("theme").onclick=function(){setTheme(theme==="dark"?"light":"dark");};
+  setTheme(theme);
+  select(location.hash==="#json"?"json":"log");
+})();
+</script>
+</body>
+</html>
