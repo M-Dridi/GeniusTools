@@ -1498,6 +1498,43 @@ h2{font-size:1.15rem;margin:34px 0 8px}
 .help li{margin:4px 0}
 .help code{font:.88em ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--panel);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;padding:18px 20px;text-align:center}
+
+main{max-width:1240px}
+.wrap{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.wrap.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:820px){.wrap.two{grid-template-columns:minmax(0,1fr)}}
+.editor.drag{border-color:var(--accent)}
+.tools{margin-top:-4px}
+.sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
+button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.side{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px;height:min(52vh,460px);min-height:260px;min-width:0}
+.side[hidden],.vw[hidden]{display:none}
+.vw{display:flex;flex-direction:column;gap:8px;height:100%;min-height:0}
+.row{display:flex;gap:6px;align-items:center}
+.row .g{flex:1}
+.side button{padding:4px 10px;font-size:.85rem}
+.side input{flex:1;min-width:0;font:inherit;font-size:.9rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 9px}
+.pathc{flex:1;min-width:0;overflow:auto;white-space:nowrap;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:.82rem ui-monospace,Menlo,Consolas,monospace}
+.tree,.diff{flex:1;min-height:0;overflow:auto;font:13px/20px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#b{flex:0 0 36%;resize:none;color:var(--ink);-webkit-text-fill-color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;font:13px/20px ui-monospace,Menlo,Consolas,monospace;position:static;width:100%;height:auto;white-space:pre;overflow:auto}
+summary{cursor:pointer;list-style:none;white-space:nowrap}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"\25B8";display:inline-block;width:1em;color:var(--muted);transition:transform .12s}
+details[open]>summary::before{transform:rotate(90deg)}
+.ct,.idx{color:var(--muted)}
+.tk{color:var(--d0)}
+.kids{margin-left:.5em;padding-left:.9em;border-left:1px solid var(--line)}
+.leaf{padding-left:1em;white-space:nowrap}
+.hit{background:color-mix(in srgb,var(--d3) 32%,transparent);border-radius:3px}
+.cur{outline:2px solid var(--accent)}
+.sel{background:color-mix(in srgb,var(--accent) 28%,transparent);border-radius:3px}
+.empty{color:var(--muted);font:14px/1.5 system-ui,sans-serif;padding:6px}
+.empty.bad{color:var(--err)}.empty.okc{color:var(--ok)}
+.sum{color:var(--muted);font:600 .85rem system-ui,sans-serif;padding:2px 4px}
+.df{padding:1px 6px;border-radius:4px;word-break:break-all}
+.df b{display:inline-block;width:1.2em}
+.df code{color:var(--ink)}
+.df.add{color:var(--ok)}.df.del{color:var(--err)}.df.chg{color:var(--n)}
 </style>
 <style>/* injected by shell */.nav,.tabs{display:none}html.theme-fade,html.theme-fade *{transition:background-color .3s ease,color .3s ease,border-color .3s ease,box-shadow .3s ease,fill .3s ease,stroke .3s ease,opacity .3s ease!important}</style>
 </head>
@@ -1513,11 +1550,26 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;padd
   <h1>JSON Validator and Formatter</h1>
   <p class="sub">To format and validate your JSON, just copy + paste it below. Click next to any bracket to see its partner.</p>
 
+  <div class="wrap" id="wrap">
   <div class="editor">
     <div class="eband" id="band" hidden></div>
     <pre class="back" id="back" aria-hidden="true"></pre>
     <pre class="gut" id="gut" aria-hidden="true"></pre>
     <textarea id="in" spellcheck="false" placeholder='{"hello": "world"}' aria-label="JSON input"></textarea>
+  </div>
+  <aside class="side" id="side" hidden>
+    <div class="vw" id="vTree" hidden>
+      <div class="row"><input id="q" type="search" placeholder="Search keys &amp; values" aria-label="Search the tree"><span id="qc" class="ct"></span><button id="qp" type="button" aria-label="Previous match">&#9650;</button><button id="qn" type="button" aria-label="Next match">&#9660;</button></div>
+      <div class="row"><code id="path" class="pathc">Click any node to see its path</code><button id="cpath" type="button">Copy</button></div>
+      <div class="row"><button id="exp" type="button">Expand all</button><button id="coll" type="button">Collapse all</button></div>
+      <div id="tree" class="tree"></div>
+    </div>
+    <div class="vw" id="vCmp" hidden>
+      <div class="row"><strong>Compare the editor (A) with B</strong><span class="g"></span><button id="bOpenB" type="button">Open file</button></div>
+      <textarea id="b" spellcheck="false" placeholder="Paste the second JSON here (B)." aria-label="Second JSON (B)"></textarea>
+      <div id="diff" class="diff"></div>
+    </div>
+  </aside>
   </div>
 
   <div class="actions">
@@ -1527,6 +1579,18 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;padd
     <button id="unstringify" type="button">Unstringify</button>
     <button id="clear" type="button">Clear</button>
     <span id="match" aria-live="polite"></span>
+  </div>
+  <div class="actions tools" role="toolbar" aria-label="More tools">
+    <button id="bSort" type="button">Sort keys A&rarr;Z</button>
+    <button id="bEsc" type="button">Escape Unicode</button>
+    <button id="bUnesc" type="button">Unescape Unicode</button>
+    <span class="sep"></span>
+    <button id="bOpen" type="button">Open file</button>
+    <button id="bSave" type="button">Save file</button>
+    <span class="sep"></span>
+    <button id="bTree" type="button" aria-pressed="false">Tree view</button>
+    <button id="bCmp" type="button" aria-pressed="false">Compare</button>
+    <input id="file" type="file" accept=".json,.txt,application/json,text/plain" hidden>
   </div>
   <div id="result" role="status" aria-live="polite">Click “Validate JSON” (or press Ctrl/Cmd + Enter) to check your input.</div>
 
@@ -1662,6 +1726,7 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;padd
     for(var l=1;l<=n;l++)g+=(curErr&&curErr.line===l)?'<i class="bad">'+l+"</i>":"<i>"+l+"</i>";
     gut.innerHTML=g;
     sync();
+    later();
   }
   function sync(){
     back.scrollTop=gut.scrollTop=ta.scrollTop;back.scrollLeft=ta.scrollLeft;
@@ -1722,6 +1787,165 @@ footer{border-top:1px solid var(--line);color:var(--muted);font-size:.85rem;padd
     var m=computeMatch(ta.value);
     if(JSON.stringify(m)!==JSON.stringify(match))paint(false);
   });
+
+  /* ===== extras: tree + search + path, compare, sort, unicode, open/save ===== */
+  var side=$("side"),wrap=$("wrap"),sv="",rt,lastSig="",hits=[],cur=-1,fname="data.json";
+  function later(){
+    if(!sv)return;
+    var sig=sv+"\u0000"+ta.value+"\u0000"+$("b").value;
+    if(sig===lastSig)return;
+    clearTimeout(rt);rt=setTimeout(function(){lastSig=sig;refresh();},250);
+  }
+  function refresh(){if(sv==="tree")buildTree();else if(sv==="cmp")runCmp();}
+  function setSide(v){
+    sv=sv===v?"":v;side.hidden=!sv;wrap.classList.toggle("two",!!sv);
+    $("vTree").hidden=sv!=="tree";$("vCmp").hidden=sv!=="cmp";
+    $("bTree").setAttribute("aria-pressed",sv==="tree");$("bCmp").setAttribute("aria-pressed",sv==="cmp");
+    lastSig="";refresh();
+  }
+  function pth(p,k,arr){return arr?p+"["+k+"]":(/^[A-Za-z_$][\w$]*$/.test(k)?p+"."+k:p+"["+JSON.stringify(k)+"]");}
+  function short(x){var s=JSON.stringify(x);return s.length>70?s.slice(0,70)+"\u2026":s;}
+
+  /* tree */
+  function node(v,k,arr,p){
+    var path=k===undefined?p:pth(p,k,arr);
+    var kh=k===undefined?"":(arr?'<span class="idx">'+k+"</span>: ":'<span class="tk">'+esc(JSON.stringify(k))+"</span>: ");
+    if(v!==null&&typeof v==="object"){
+      var isA=Array.isArray(v),en=isA?v.map(function(x,i){return [i,x];}):Object.keys(v).map(function(x){return [x,v[x]];});
+      var d=document.createElement("details");d.open=true;d.dataset.path=path;
+      var sm=document.createElement("summary");
+      sm.innerHTML=kh+(isA?"[":"{")+' <span class="ct">'+en.length+(isA?" items":" keys")+"</span>";
+      var kids=document.createElement("div");kids.className="kids";
+      en.forEach(function(e){kids.appendChild(node(e[1],e[0],isA,path));});
+      d.appendChild(sm);d.appendChild(kids);return d;
+    }
+    var div=document.createElement("div");div.className="leaf";div.dataset.path=path;
+    var c=typeof v==="string"?"str":typeof v==="number"?"num":"lit";
+    div.innerHTML=kh+'<span class="tv '+c+'">'+esc(JSON.stringify(v))+"</span>";
+    return div;
+  }
+  function buildTree(){
+    var t=$("tree"),s=ta.value;t.innerHTML="";hits=[];cur=-1;$("qc").textContent="";
+    if(!s.trim()){t.innerHTML='<div class="empty">Paste JSON in the editor to see its tree.</div>';return;}
+    var e=check(s);
+    if(e){t.innerHTML='<div class="empty bad">Fix the error at line '+e.line+", column "+e.col+" to see the tree.</div>";return;}
+    t.appendChild(node(JSON.parse(s),undefined,false,"$"));search();
+  }
+  function search(){
+    var t=$("tree"),q=$("q").value.toLowerCase();
+    t.querySelectorAll(".hit,.cur").forEach(function(x){x.classList.remove("hit","cur");});
+    hits=[];cur=-1;$("qc").textContent="";
+    if(!q)return;
+    t.querySelectorAll(".tk,.tv").forEach(function(x){if(x.textContent.toLowerCase().indexOf(q)>-1){x.classList.add("hit");hits.push(x);}});
+    if(hits.length)go(0);else $("qc").textContent="0 found";
+  }
+  function go(i){
+    if(!hits.length)return;
+    if(cur>-1)hits[cur].classList.remove("cur");
+    cur=(i+hits.length)%hits.length;var h=hits[cur];h.classList.add("cur");
+    for(var p=h.parentElement;p&&p.id!=="tree";p=p.parentElement)if(p.tagName==="DETAILS")p.open=true;
+    h.scrollIntoView({block:"nearest"});$("qc").textContent=(cur+1)+" / "+hits.length;
+  }
+  $("q").addEventListener("input",search);
+  $("q").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();go(cur+(e.shiftKey?-1:1));}});
+  $("qn").onclick=function(){go(cur+1);};$("qp").onclick=function(){go(cur-1);};
+  $("exp").onclick=function(){$("tree").querySelectorAll("details").forEach(function(d){d.open=true;});};
+  $("coll").onclick=function(){$("tree").querySelectorAll("details").forEach(function(d){d.open=false;});};
+  $("tree").addEventListener("click",function(e){
+    var n=e.target.closest("[data-path]");if(!n)return;
+    $("tree").querySelectorAll(".sel").forEach(function(x){x.classList.remove("sel");});
+    (n.tagName==="DETAILS"?n.firstElementChild:n).classList.add("sel");
+    $("path").textContent=n.dataset.path;
+  });
+  $("cpath").onclick=function(){
+    var t=$("path").textContent,b=$("cpath"),ok=function(){b.textContent="Copied!";setTimeout(function(){b.textContent="Copy";},1200);};
+    var fb=function(){var x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();document.execCommand("copy");x.remove();ok();};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb();
+  };
+
+  /* compare */
+  function kind(x){return x===null?"null":Array.isArray(x)?"array":typeof x;}
+  function diff(a,b,p,o){
+    var ka=kind(a),kb=kind(b);
+    if(ka!==kb){o.push({k:"chg",p:p,a:a,b:b});return;}
+    if(ka==="object"){
+      Object.keys(a).forEach(function(k){if(k in b)diff(a[k],b[k],pth(p,k,false),o);else o.push({k:"del",p:pth(p,k,false),a:a[k]});});
+      Object.keys(b).forEach(function(k){if(!(k in a))o.push({k:"add",p:pth(p,k,false),b:b[k]});});
+    }else if(ka==="array"){
+      for(var i=0;i<Math.max(a.length,b.length);i++){
+        if(i>=a.length)o.push({k:"add",p:pth(p,i,true),b:b[i]});
+        else if(i>=b.length)o.push({k:"del",p:pth(p,i,true),a:a[i]});
+        else diff(a[i],b[i],pth(p,i,true),o);
+      }
+    }else if(a!==b)o.push({k:"chg",p:p,a:a,b:b});
+  }
+  function runCmp(){
+    var out=$("diff"),sa=ta.value,sb=$("b").value;out.innerHTML="";
+    function msg(t,c){out.innerHTML='<div class="empty '+(c||"")+'">'+esc(t)+"</div>";}
+    if(!sb.trim()){msg("Paste or open a second JSON in box B. The editor on the left is A.");return;}
+    var ea=sa.trim()?check(sa):{line:1,col:1,msg:"A is empty"},eb=check(sb),m="";
+    if(ea)m+="A (editor) has an error at line "+ea.line+", column "+ea.col+": "+ea.msg+". ";
+    if(eb)m+="B has an error at line "+eb.line+", column "+eb.col+": "+eb.msg+".";
+    if(m){msg(m,"bad");return;}
+    var d=[];diff(JSON.parse(sa),JSON.parse(sb),"$",d);
+    if(!d.length){msg("Identical: no differences found.","okc");return;}
+    var c={add:0,del:0,chg:0};d.forEach(function(x){c[x.k]++;});
+    var h=document.createElement("div");h.className="sum";
+    h.textContent=d.length+" difference"+(d.length>1?"s":"")+": "+c.add+" only in B, "+c.del+" only in A, "+c.chg+" changed";
+    out.appendChild(h);
+    d.forEach(function(x){
+      var r=document.createElement("div");r.className="df "+x.k;
+      r.innerHTML="<b>"+(x.k==="add"?"+":x.k==="del"?"\u2212":"~")+"</b><code>"+esc(x.p)+"</code> "+
+        (x.k==="chg"?"<span>"+esc(short(x.a))+"</span> \u2192 <span>"+esc(short(x.b))+"</span>":"<span>"+esc(short(x.k==="add"?x.b:x.a))+"</span>");
+      out.appendChild(r);
+    });
+  }
+  $("b").addEventListener("input",later);
+
+  /* transforms */
+  function sortObj(v){return Array.isArray(v)?v.map(sortObj):(v&&typeof v==="object")?Object.keys(v).sort().reduce(function(o,k){o[k]=sortObj(v[k]);return o;},{}):v;}
+  function tx(title,fn,msg){
+    var s=ta.value;
+    if(!s.trim()){empty();return;}
+    curErr=check(s);paint();
+    if(curErr){reportError(s,"Fix the JSON first: it isn't valid");return;}
+    ta.value=fn(JSON.parse(s));paint();show("ok",title,msg);
+  }
+  $("bSort").onclick=function(){tx("Keys sorted",function(v){return JSON.stringify(sortObj(v),null,2);},"Every object key is now in A\u2192Z order, at all levels.");};
+  $("bEsc").onclick=function(){tx("Unicode escaped",function(v){return JSON.stringify(v,null,2).replace(/[\u0080-\uffff]/g,function(c){return "\\u"+("0000"+c.charCodeAt(0).toString(16)).slice(-4);});},"Non-ASCII characters are now \\uXXXX escapes.");};
+  $("bUnesc").onclick=function(){tx("Unicode unescaped",function(v){return JSON.stringify(v,null,2);},"\\uXXXX escapes were turned back into readable characters.");};
+
+  /* files: open, drag & drop, save */
+  function readInto(file,area){
+    if(!file)return;
+    var r=new FileReader();
+    r.onload=function(){
+      area.value=r.result;if(area===ta)fname=file.name;
+      area.dispatchEvent(new Event("input"));
+      show("ok","Loaded "+file.name,(file.size/1024).toFixed(1)+" KB"+(area===ta?". Click Validate JSON to check it.":" into B."));
+    };
+    r.onerror=function(){show("bad","Couldn't read that file","");};
+    r.readAsText(file);
+  }
+  var target=ta;
+  $("bOpen").onclick=function(){target=ta;$("file").click();};
+  $("bOpenB").onclick=function(){target=$("b");$("file").click();};
+  $("file").addEventListener("change",function(){readInto(this.files[0],target);this.value="";});
+  function dropOn(el,area){
+    el.addEventListener("dragover",function(e){e.preventDefault();el.classList.add("drag");});
+    el.addEventListener("dragleave",function(){el.classList.remove("drag");});
+    el.addEventListener("drop",function(e){e.preventDefault();el.classList.remove("drag");readInto(e.dataTransfer.files[0],area);});
+  }
+  dropOn(document.querySelector(".editor"),ta);dropOn($("b"),$("b"));
+  $("bSave").onclick=function(){
+    var s=ta.value;if(!s.trim()){empty();return;}
+    var u=URL.createObjectURL(new Blob([s],{type:"application/json"})),a=document.createElement("a");
+    a.href=u;a.download=fname;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(u);},1000);
+    show("ok","Saved","Downloaded as "+fname+".");
+  };
+  $("bTree").onclick=function(){setSide("tree");};
+  $("bCmp").onclick=function(){setSide("cmp");};
   paint();
 })();
 <\/script>
